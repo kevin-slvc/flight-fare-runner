@@ -35,7 +35,7 @@ jobs:
           test -f requests/latest.json
           command -v google-chrome >/dev/null
           command -v xvfb-run >/dev/null
-          node -e "if(Number(process.versions.node.split('.')[0])<24)process.exit(2)"
+          node -e "if(Number(process.versions.node.split('.')[0])<20)process.exit(2)"
           npm ci --prefix collector --ignore-scripts --no-audit --no-fund
       - name: Capture originals without site credentials
         run: xvfb-run -a python3 collect.py
