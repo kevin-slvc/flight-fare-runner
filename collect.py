@@ -84,7 +84,7 @@ def main():
             return 2
         receipt['request']=request
         for index,task in enumerate(request['tasks']):
-            if index:time.sleep(60)
+            if index:time.sleep(120)
             task_file=output/f'{index}-task.json'
             raw_file=output/f'{index}-raw.json'
             task_file.write_text(json.dumps(task))

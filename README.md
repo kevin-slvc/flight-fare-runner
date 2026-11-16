@@ -36,3 +36,5 @@ Unverified: live GitHub execution, source access restrictions on that runner, VM
 
 
 UI regression tests run in a separate public standard runner against synthetic offline HTML only, without requests to the fare provider. Fare controls support native and ARIA buttons. Payment conditions, the selected action and quoted price must belong to the same card; the passenger total must match that card. Failure screenshots and page text are private evidence and are encrypted before release upload. No logged-in browser profile is used.
+
+Capture batches pause two minutes between cities while keeping the existing five-city hourly cap. Human verification or provider access restriction stops the remaining batch; no immediate retry, stealth, proxy or IP switching is used.
