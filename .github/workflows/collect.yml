@@ -1,0 +1,62 @@
+name: Capture encrypted fare evidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [requests/latest.json]
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+concurrency:
+  group: fare-observation
+  cancel-in-progress: false
+jobs:
+  capture:
+    # Never charge private-repository compute or use larger runners.
+    if: ${{ github.event.repository.private == false && github.event.repository.visibility == 'public' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Read the exact public commit without credentials
+        env:
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          git init -q .
+          git remote add origin "https://github.com/$REPOSITORY.git"
+          git fetch -q --depth=1 origin "$SOURCE_COMMIT"
+          git checkout -q --detach FETCH_HEAD
+      - name: Check the recipient before collecting
+        run: |
+          test -f recipient.pem
+          if grep -q 'PRIVATE KEY' recipient.pem; then exit 2; fi
+          openssl x509 -in recipient.pem -noout >/dev/null
+          test -f requests/latest.json
+          command -v google-chrome >/dev/null
+          command -v xvfb-run >/dev/null
+          node -e "if(Number(process.versions.node.split('.')[0])<24)process.exit(2)"
+          npm ci --prefix collector --ignore-scripts --no-audit --no-fund
+      - name: Capture originals without site credentials
+        run: xvfb-run -a python3 collect.py
+      - name: Encrypt the original receipt
+        if: ${{ always() }}
+        run: |
+          test -f private-output/receipt.json
+          openssl cms -encrypt -binary -aes-256-gcm -in private-output/receipt.json -outform DER -out evidence.cms.tmp -recip recipient.pem -keyopt rsa_padding_mode:oaep
+          mv evidence.cms.tmp evidence.cms
+      - name: Attest the encrypted asset to this exact workflow run
+        id: attest
+        if: ${{ always() && hashFiles('evidence.cms') != '' }}
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: evidence.cms
+      - name: Publish only encrypted software evidence
+        if: ${{ always() && steps.attest.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ATTESTATION_BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          test -f evidence.cms
+          python3 publish.py

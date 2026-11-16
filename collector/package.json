@@ -1,0 +1,11 @@
+{
+  "name": "flight-collector",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check observe.mjs && node --check probe.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "1.65.1"
+  }
+}
