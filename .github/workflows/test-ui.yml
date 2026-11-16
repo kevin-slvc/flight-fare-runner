@@ -1,0 +1,27 @@
+name: Test fare UI without provider requests
+on:
+  push:
+    branches: [main]
+    paths: ['collector/**', '.github/workflows/test-ui.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    if: ${{ github.event.repository.private == false && github.event.repository.visibility == 'public' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Read exact public source without credentials
+        env:
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          git init -q .
+          git remote add origin "https://github.com/$REPOSITORY.git"
+          git fetch -q --depth=1 origin "$SOURCE_COMMIT"
+          git checkout -q --detach FETCH_HEAD
+      - name: Install pinned browser control
+        run: npm ci --prefix collector --ignore-scripts --no-audit --no-fund
+      - name: Test card binding with offline fixtures
+        run: xvfb-run -a node --test collector/fare-ui.test.mjs
