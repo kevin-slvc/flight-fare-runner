@@ -59,6 +59,14 @@ class RequestTests(unittest.TestCase):
             self.assertEqual(code,2);self.assertTrue(receipt['providerPaused'])
             self.assertEqual(len(receipt['observations']),1);self.assertEqual(process.call_count,1)
 
+    def test_provider_access_restriction_stops_without_retry(self):
+        with tempfile.TemporaryDirectory() as temp:
+            def blocked(args,seconds):
+                Path(args[-1]).write_text(json.dumps({'stage':'failed','diagnosticText':'whaleguard block\n'}))
+                return 0
+            code,receipt,process=self.run_capture(Path(temp),self.request(('ICN','TPE','HKG')),blocked)
+            self.assertEqual(code,2);self.assertTrue(receipt['providerPaused']);self.assertEqual(process.call_count,1)
+
     def test_interrupt_never_leaves_a_success_status(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);(root/'requests').mkdir();(root/'requests/latest.json').write_text(json.dumps(self.request()))

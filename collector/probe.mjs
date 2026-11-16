@@ -61,7 +61,11 @@ export default async (page, options={}) => {
   return {probeVersion:2,selectedFarePrice:selectedFare.price,selectedFareText:selectedFare.text,startedAt,observedAt:new Date().toISOString(),provider:'Trip.com',stage:'passenger_form_quote',queryUrl,from,to,out,back,total,currency:'JPY',adults:1,paymentCondition:'unspecified',flights,bookingCompleted:false,text,outboundList,returnList};
   } catch(error) {
     const challenge=await activePage.locator('#verification-slider').isVisible().catch(()=>false);
+    const diagnosticActions=await activePage.getByRole('button',{name:/^(選択|次へ)$/}).evaluateAll(buttons=>buttons.slice(0,8).map(button=>{
+      const ancestors=[];for(let node=button.parentElement,depth=0;node&&depth<4;node=node.parentElement,depth++)ancestors.push({tag:node.tagName,role:node.getAttribute('role'),text:(node.innerText||'').slice(0,1800)});
+      return {label:button.innerText,ancestors};
+    })).catch(()=>[]);
     const diagnosticScreenshot=await activePage.screenshot({type:'jpeg',quality:55,timeout:5000}).then(b=>b.toString('base64')).catch(()=>null);
-    return {diagnosticScreenshot,selectedFarePrice:selectedFare?.price,selectedFareText:selectedFare?.text,startedAt,failedAt:new Date().toISOString(),provider:'Trip.com',stage:'failed',step,diagnosticText:(await activePage.locator('body').innerText().catch(()=>'' )).slice(0,15000),queryUrl,from,to,out,back,reason:challenge?'human_verification_required':String(error.message).split('\n')[0],bookingCompleted:false};
+    return {diagnosticActions,diagnosticScreenshot,selectedFarePrice:selectedFare?.price,selectedFareText:selectedFare?.text,startedAt,failedAt:new Date().toISOString(),provider:'Trip.com',stage:'failed',step,diagnosticText:(await activePage.locator('body').innerText().catch(()=>'' )).slice(0,15000),queryUrl,from,to,out,back,reason:challenge?'human_verification_required':String(error.message).split('\n')[0],bookingCompleted:false};
   }
 }

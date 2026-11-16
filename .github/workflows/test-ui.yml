@@ -23,5 +23,7 @@ jobs:
           git checkout -q --detach FETCH_HEAD
       - name: Install pinned browser control
         run: npm ci --prefix collector --ignore-scripts --no-audit --no-fund
+      - name: Check capture syntax
+        run: node --check collector/probe.mjs
       - name: Test card binding with offline fixtures
         run: xvfb-run -a node --test collector/fare-ui.test.mjs
