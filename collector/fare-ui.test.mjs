@@ -72,3 +72,15 @@ test('missing menu options cannot escape into unrelated page labels',async()=>{
   await assert.rejects(()=>chooseUnrestrictedFare(page),/payment_menu_not_found/);
  }finally{await page.close();}
 });
+
+
+test('ARIA button fare actions keep the same card binding',async()=>{
+ const page=await browser.newPage();
+ try{
+  await page.setContent('<article id="base"><p>30,000円</p><p>往復</p><p>エコノミークラス</p><span>支払い方法指定なし</span><div role="button" tabindex="0">次へ</div></article>');
+  const fare=await chooseUnrestrictedFare(page);
+  assert.equal(await fare.card.getAttribute('id'),'base');
+  assert.equal(fareDetails(fare.text).price,30000);
+  await assertFareUnchanged(fare);
+ }finally{await page.close();}
+});

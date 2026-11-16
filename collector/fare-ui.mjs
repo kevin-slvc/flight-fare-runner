@@ -14,7 +14,7 @@ export async function firstFareCard(page){
   const handle=await button.evaluateHandle(button=>{
    for(let node=button.parentElement,depth=0;node&&depth<12;node=node.parentElement,depth++){
     const text=node.innerText||'';
-    const choices=[...node.querySelectorAll('button')].filter(b=>/^(選択|次へ)$/.test(b.innerText.trim())&&b.getClientRects().length);
+    const choices=[...node.querySelectorAll('button,[role="button"]')].filter(b=>/^(選択|次へ)$/.test(b.innerText.trim())&&b.getClientRects().length);
     if(choices.length!==1)continue;
     if(text.includes('往復')&&text.includes('エコノミークラス')&&/支払い方法指定なし|お支払い方法\s*[：:]/.test(text))return node;
    }
@@ -37,7 +37,7 @@ export async function chooseUnrestrictedFare(page){
  await heading.waitFor({timeout:10000});
  const menuHandle=await heading.evaluateHandle(heading=>{
   for(let node=heading.parentElement,depth=0;node&&depth<8;node=node.parentElement,depth++){
-   if([...node.querySelectorAll('button')].some(b=>/^(選択|次へ)$/.test(b.innerText.trim())))break;
+   if([...node.querySelectorAll('button,[role="button"]')].some(b=>/^(選択|次へ)$/.test(b.innerText.trim())))break;
    if(node.innerText.includes('VISA')&&node.innerText.includes('支払い方法指定なし'))return node;
   }
   return null;
